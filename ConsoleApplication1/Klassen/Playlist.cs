@@ -1,19 +1,43 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.IO;
 
 namespace streamd
 {
 	public class Playlist
 	{
 		string name;
+		string path;
+
+		bool shuffle;
+		bool loop;
+
+		byte level;
+
 		List<string> tracks;
 
-		public Playlist(string name)
+		public Playlist(string name, string path, byte level = 1, bool loop = true, bool shuffle = true)
 		{
+			this.loop = loop;
+			this.shuffle = shuffle;
+			this.level = level;
+
+			this.path = path;
 			this.name = name;
 			this.tracks = new List<string>();
+		}
+
+		internal void AddEntries()
+		{
+			var dirinfo = new DirectoryInfo(this.path);
+			foreach (var file in dirinfo.GetFiles("*.mp3", SearchOption.AllDirectories))
+			{
+				if (file.Length < 1000 && !file.Exists)
+					continue;
+
+				this.Add = file.FullName;
+
+			}
 		}
 
 		public string Add
@@ -21,7 +45,33 @@ namespace streamd
 			set
 			{
 				if (!this.tracks.Contains(value))
-					this.tracks.Add(value);
+				{
+					
+					var parts = value.Split('.');
+
+					if (parts.Length > 1)
+					{
+						this.tracks.Add(value);
+						Console.WriteLine("\t{0}\t{1}", parts[(parts.Length - 1)]
+							.Replace(".", string.Empty).ToUpperInvariant(), value);
+					}
+				}
+			}
+		}
+
+		public string Name
+		{
+			get
+			{
+				return this.name;
+			}
+		}
+
+		public byte Level
+		{
+			get
+			{
+				return this.level;
 			}
 		}
 
@@ -30,6 +80,30 @@ namespace streamd
 			get
 			{
 				return this.tracks;
+			}
+		}
+
+		public bool Loop
+		{
+			get
+			{
+				return this.loop;
+			}
+		}
+
+		public bool Shuffle
+		{
+			get
+			{
+				return this.shuffle;
+			}
+		}
+
+		public int Count
+		{
+			get
+			{
+				return this.tracks.Count;
 			}
 		}
 	}
