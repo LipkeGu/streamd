@@ -63,8 +63,44 @@ namespace streamd
 				Playlists.Add(name, playlist);
 		}
 
+		public static void WritePlaylist(string path = "")
+		{
+			if (Playlists.Keys.Count != 0)
+			{
+				foreach (var playlist in Playlists.Values)
+				{
+					if (playlist.Tracks.Count > 0)
+					{
+						using (var sw = new StreamWriter(Path.Combine(path, string.Format("{0}.lst", playlist.Name))))
+						{
+							Console.WriteLine("\tPLAYLIST\t{0}", playlist.Name);
+
+							sw.AutoFlush = true;
+							sw.NewLine = Environment.NewLine;
+
+							foreach (var entry in playlist.Tracks)
+							{
+								if (!string.IsNullOrEmpty(entry) && !string.IsNullOrWhiteSpace(entry))
+								{
+									sw.WriteLine(entry);
+									Console.WriteLine("\tMP3\t{0}", entry);
+								}
+							}
+
+							Console.WriteLine("");
+						}
+					}
+					else
+						Console.WriteLine("WARN: Skipping empty Playlist \"{0}\"", playlist.Name);
+				}
+			}
+		}
+
 		public static void ReadUserList(string filename, bool detect_encoding = true)
 		{
+			if (string.IsNullOrEmpty(filename))
+				return;
+
 			using (var sr = new StreamReader(filename, detect_encoding))
 			{
 				var line = string.Empty;
@@ -88,10 +124,23 @@ namespace streamd
 					}
 				}
 			}
+
+			try
+			{
+				File.Delete(filename);
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine("ERROR: Cant delete file \"{0}\": {1}", filename, e);
+			}
+			
 		}
 
 		public static void WriteUserList(string filename, Encoding encoding, int pwlen = 8)
 		{
+			if (Users.Count == 0)
+				return;
+
 			using (var sw = new StreamWriter(filename, false, encoding))
 			{
 				sw.AutoFlush = true;
@@ -125,7 +174,7 @@ namespace streamd
 					i++;
 				}
 
-				Console.WriteLine("{0} DJs written to: {1}", i, filename);
+				Console.WriteLine("{0} DJs written to: {1}", (i - 1), filename);
 				Console.WriteLine();
 
 				WriteCalender("calendar.xml");
@@ -147,7 +196,7 @@ namespace streamd
 			xw.WriteStartDocument();
 			xw.WriteStartElement("eventlist");
 
-			if (Playlists.Keys.Count != 0)
+			if (Playlists.Keys.Count > 0)
 			{
 				foreach (var playlist in Playlists.Values)
 				{
@@ -181,29 +230,36 @@ namespace streamd
 					Console.WriteLine(string.Format("\tEVENT<PLAYLIST>\t{0}", playlist.Name));
 				}
 
-				Console.WriteLine("{0} Playlists written to: {1}", Users.Keys.Count, filename);
+				Console.WriteLine("{0} Playlists written to: {1}", Playlists.Keys.Count, filename);
 			}
 			else
 				Console.WriteLine("Nothing to do for rule \"Playlists\"...");
 
-			foreach (var user in Users.Values)
+			if (Users.Keys.Count > 0)
 			{
-				xw.WriteStartElement("event");
-				xw.WriteAttributeString("type", "dj");
+				foreach (var user in Users.Values)
+				{
+					xw.WriteStartElement("event");
+					xw.WriteAttributeString("type", "dj");
 
-				xw.WriteStartElement("dj");
-				xw.WriteAttributeString("archive", "0");
-				xw.WriteAttributeString("priority", string.Format("{0}", user.Level));
-				xw.WriteValue(user.Username);
-				xw.WriteEndElement(); // Dj
+					xw.WriteStartElement("dj");
+					xw.WriteAttributeString("archive", "0");
+					xw.WriteAttributeString("priority", string.Format("{0}", user.Level));
+					xw.WriteValue(user.Username);
+					xw.WriteEndElement(); // Dj
 
-				xw.WriteStartElement("calender");
-				xw.WriteAttributeString("starttime", "00:00:00");
-				xw.WriteEndElement(); // Calender
-				xw.WriteEndElement(); // Event
+					xw.WriteStartElement("calender");
+					xw.WriteAttributeString("starttime", "00:00:00");
+					xw.WriteEndElement(); // Calender
+					xw.WriteEndElement(); // Event
 
-				Console.WriteLine(string.Format("\tEVENT<DJ>\t{0}", user.Username));
+					Console.WriteLine(string.Format("\tEVENT<DJ>\t{0}", user.Username));
+				}
+
+				Console.WriteLine("{0} DJ Events written to: {1}", Users.Keys.Count, filename);
 			}
+			else
+				Console.WriteLine("Nothing to do for rule \"Users\"...");
 
 			xw.WriteEndElement();
 			xw.WriteEndDocument();

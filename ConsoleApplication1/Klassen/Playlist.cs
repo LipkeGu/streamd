@@ -25,6 +25,8 @@ namespace streamd
 			this.path = path;
 			this.name = name;
 			this.tracks = new List<string>();
+
+			AddEntries();
 		}
 
 		internal void AddEntries()
@@ -36,7 +38,6 @@ namespace streamd
 					continue;
 
 				this.Add = file.FullName;
-
 			}
 		}
 
@@ -46,15 +47,10 @@ namespace streamd
 			{
 				if (!this.tracks.Contains(value))
 				{
-					
 					var parts = value.Split('.');
 
 					if (parts.Length > 1)
-					{
 						this.tracks.Add(value);
-						Console.WriteLine("\t{0}\t{1}", parts[(parts.Length - 1)]
-							.Replace(".", string.Empty).ToUpperInvariant(), value);
-					}
 				}
 			}
 		}

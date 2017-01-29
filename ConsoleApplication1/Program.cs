@@ -13,22 +13,15 @@ namespace streamd
 				return;
 			}
 
-			if (!Filesystem.Exists(args[0], Filesystem.Type.File))
+			if (Filesystem.Exists(args[0], Filesystem.Type.File) &&
+				Filesystem.Exists(args[2], Filesystem.Type.Directory))
 			{
-				Console.WriteLine("File not Found: {0}!", args[0]);
-				return;
+				Filesystem.GeneratePlaylist(args[2]);
+				Filesystem.WritePlaylist("");
+
+				Filesystem.ReadUserList(args[0], true);
+				Filesystem.WriteUserList(args[1], Encoding.ASCII);
 			}
-
-			if (!Filesystem.Exists(args[2], Filesystem.Type.Directory))
-			{
-				Console.WriteLine("File not Found: {0}!", args[2]);
-				return;
-			}
-
-			Filesystem.GeneratePlaylist(args[2]);
-
-			Filesystem.ReadUserList(args[0], true);
-			Filesystem.WriteUserList(args[1], Encoding.ASCII);
 		}
 	}
 }
